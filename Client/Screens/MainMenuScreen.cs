@@ -21,6 +21,7 @@ public class MainMenuScreen(Window target)
         {
             MainMenuActionList.Action.CREATE_GAME => new CreateGameScreen(Target).Show(),
             MainMenuActionList.Action.JOIN_GAME => new JoinGameScreen(Target).Show(),
+            MainMenuActionList.Action.STATISTICS => new StatisticsScreen(Target).Show(),
             MainMenuActionList.Action.QUIT => Task.Run(() => Application.RequestStop()),
             _ => Task.Run(() => Application.RequestStop())
         };
@@ -39,7 +40,7 @@ public class MainMenuScreen(Window target)
     {
         ActionList.X = ActionList.Y = Pos.Center();
         ActionList.Width = 13;
-        ActionList.Height = 3;
+        ActionList.Height = 4;
 
         ActionList.OpenSelectedItem += (_, selected) => { Action = (MainMenuActionList.Action) selected.Value; };
 
@@ -58,12 +59,14 @@ public class MainMenuActionList : ListView
     {
         CREATE_GAME,
         JOIN_GAME,
+        STATISTICS,
         QUIT
     }
 
     private readonly MainMenuActionListDataSource Actions = [
         Action.CREATE_GAME,
         Action.JOIN_GAME,
+        Action.STATISTICS,
         Action.QUIT
     ];
 
@@ -100,6 +103,9 @@ public class MainMenuActionListDataSource : List<MainMenuActionList.Action>, ILi
                 break;
             case (int) MainMenuActionList.Action.JOIN_GAME:
                 driver.AddStr("Join a game");
+                break;
+            case (int) MainMenuActionList.Action.STATISTICS:
+                driver.AddStr("view stats");
                 break;
             case (int) MainMenuActionList.Action.QUIT:
                 driver.AddStr("Quit");
