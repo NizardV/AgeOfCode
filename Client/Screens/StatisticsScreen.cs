@@ -61,12 +61,12 @@ internal class StatisticsScreen
 
         try
         {
-            var httpHandler = new HttpClientHandler
+            using var httpHandler = new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = (_, __, ___, ____) => true
             };
 
-            var httpClient = new HttpClient(httpHandler)
+            using var httpClient = new HttpClient(httpHandler)
             {
                 BaseAddress = new Uri($"{WssConfig.WebApiServerScheme}://{WssConfig.WebApiServerDomain}:{WssConfig.WebApiServerPort}")
             };
@@ -121,7 +121,8 @@ internal class StatisticsScreen
             AlignKV("Total rounds (planned)", Stats.TotalRoundsPlanned.ToString()),
             AlignKV("Total rounds (played)",  Stats.TotalRoundsPlayed.ToString()),
             AlignKV("Avg rounds / game",      Stats.AvgRoundsPlayed.ToString("0.00")),
-            AlignKV("Total consultants",      Stats.TotalConsultants.ToString())
+            AlignKV("Total consultants",      Stats.TotalConsultants.ToString()),
+            AlignKV("Player with the highest treasury",      Stats.HighestTreasury.ToString())
         };
 
         var dataSource = new StatsListDataSource();

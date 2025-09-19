@@ -40,7 +40,7 @@ public class MainMenuScreen(Window target)
     {
         ActionList.X = ActionList.Y = Pos.Center();
         ActionList.Width = 13;
-        ActionList.Height = 3;
+        ActionList.Height = 4;
 
         ActionList.OpenSelectedItem += (_, selected) => { Action = (MainMenuActionList.Action) selected.Value; };
 

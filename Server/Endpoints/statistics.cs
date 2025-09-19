@@ -35,6 +35,8 @@ public class GameStatistics : IEndpoint
 
         var totalGames = list.Count;
 
+
+
         var waiting = list.Count(g => g.Status == GameStatus.Waiting);
         var inProgress = list.Count(g => g.Status == GameStatus.InProgress);
         var finished = list.Count(g => g.Status == GameStatus.Finished);
@@ -50,6 +52,16 @@ public class GameStatistics : IEndpoint
             g.Status == GameStatus.Waiting && g.PlayersCount < 3
         );
 
+        // Compute highest treasury player name among finished games
+        var highestTreasuryPlayer = await context.Players
+            .AsNoTracking()
+            .Where(p => p.Game.Status == GameStatus.Finished)
+            .Select(p => new { p.Name, Treasury = p.Company.Treasury })
+            .OrderByDescending(x => x.Treasury)
+            .FirstOrDefaultAsync();
+
+        var highestTreasury = highestTreasuryPlayer?.Name ?? string.Empty;
+
         var payload = new GamesStatsResponse(
             TotalGames: totalGames,
             WaitingGames: waiting,
@@ -61,7 +73,8 @@ public class GameStatistics : IEndpoint
             TotalRoundsPlanned: totalRoundsPlanned,
             TotalRoundsPlayed: totalRoundsPlayed,
             AvgRoundsPlayed: Math.Round(avgRoundsPlayed, 2),
-            TotalConsultants: list.Sum(g => g.ConsultantsCount)
+            TotalConsultants: list.Sum(g => g.ConsultantsCount),
+            HighestTreasury: highestTreasury
         );
 
         return Results.Ok(payload);
@@ -79,5 +92,6 @@ public sealed record GamesStatsResponse(
     int TotalRoundsPlanned,
     int TotalRoundsPlayed,
     double AvgRoundsPlayed,
-    int TotalConsultants
+    int TotalConsultants,
+    string HighestTreasury
 );

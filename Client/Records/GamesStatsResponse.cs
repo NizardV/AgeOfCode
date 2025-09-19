@@ -16,7 +16,8 @@ public sealed record GamesStatsResponse(
     int TotalRoundsPlanned,
     int TotalRoundsPlayed,
     double AvgRoundsPlayed,
-    int TotalConsultants
+    int TotalConsultants,
+    string HighestTreasury
 );
 
 public sealed class GamesStatsEnvelope
