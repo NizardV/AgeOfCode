@@ -1,16 +1,15 @@
 using FluentAssertions;
-
 using FluentResults;
-
 using Moq;
 
 using Server.Actions;
 using Server.Actions.Contracts;
-using Server.Hubs;
 using Server.Hubs.Contracts;
+using Server.Hubs;
 using Server.Hubs.Records;
 using Server.Models;
 using Server.Persistence.Contracts;
+using Server.Enumes;
 
 namespace Server.Tests.Unit.Actions;
 
@@ -28,15 +27,15 @@ public class CreateGameTest
 
         _gamesRepositoryMock
             .Setup(r => r.IsGameNameAvailable(It.IsAny<string>()))
-            .Returns(Task.Run(() => true));
+            .ReturnsAsync(true);
 
         _gamesRepositoryMock
             .Setup(r => r.SaveGame(It.IsAny<Game>()))
-            .Returns(Task.Run(() => { }));
+            .Returns(Task.CompletedTask);
 
         _createPlayerMock
             .Setup(a => a.PerformAsync(It.IsAny<CreatePlayerParams>()))
-            .Returns(Task.Run(() => Result.Ok(It.IsAny<Player>())));
+            .ReturnsAsync(Result.Ok(new Player("Player 1", 1)));
 
         _mainHubServiceMock
             .Setup(s => s.UpdateJoinableGamesList(It.IsAny<IMainHubClient>()))
@@ -46,7 +45,13 @@ public class CreateGameTest
     [Fact]
     public async Task ItShouldNotCreateGameWithoutAGameName()
     {
-        var actionParams = new CreateGameParams("", "Player 1", "Company 1");
+        var actionParams = new CreateGameParams(
+            "",                  // GameName
+            "Player 1",
+            "Company 1",
+            CompanyType.Startup  // nouveau param type
+        );
+
         var action = new CreateGame(
             _gamesRepositoryMock.Object,
             _createPlayerMock.Object,
@@ -63,7 +68,13 @@ public class CreateGameTest
     [Fact]
     public async Task ItShouldNotCreateGameWithoutAPlayerName()
     {
-        var actionParams = new CreateGameParams("Game 1", "", "Company 1");
+        var actionParams = new CreateGameParams(
+            "Game 1",
+            "",
+            "Company 1",
+            CompanyType.Startup
+        );
+
         var action = new CreateGame(
             _gamesRepositoryMock.Object,
             _createPlayerMock.Object,
@@ -80,7 +91,14 @@ public class CreateGameTest
     [Fact]
     public async Task ItShouldNotCreateGameWithTooFewRounds()
     {
-        var actionParams = new CreateGameParams("Game 1", "Player 1", "Company 1", 14);
+        var actionParams = new CreateGameParams(
+            "Game 1",
+            "Player 1",
+            "Company 1",
+            CompanyType.Startup,
+            14
+        );
+
         var action = new CreateGame(
             _gamesRepositoryMock.Object,
             _createPlayerMock.Object,
@@ -99,9 +117,15 @@ public class CreateGameTest
     {
         _gamesRepositoryMock
             .Setup(r => r.IsGameNameAvailable(It.IsAny<string>()))
-            .Returns(Task.Run(() => false));
+            .ReturnsAsync(false);
 
-        var actionParams = new CreateGameParams("Game 1", "Player 1", "Company 1");
+        var actionParams = new CreateGameParams(
+            "Game 1",
+            "Player 1",
+            "Company 1",
+            CompanyType.Startup
+        );
+
         var action = new CreateGame(
             _gamesRepositoryMock.Object,
             _createPlayerMock.Object,
@@ -120,9 +144,15 @@ public class CreateGameTest
     {
         _createPlayerMock
             .Setup(a => a.PerformAsync(It.IsAny<CreatePlayerParams>()))
-            .Returns(Task.Run(() => Result.Fail<Player>("CreatePlayer ERROR")));
+            .ReturnsAsync(Result.Fail<Player>("CreatePlayer ERROR"));
 
-        var actionParams = new CreateGameParams("Game 1", "Player 1", "Company 1");
+        var actionParams = new CreateGameParams(
+            "Game 1",
+            "Player 1",
+            "Company 1",
+            CompanyType.Startup
+        );
+
         var action = new CreateGame(
             _gamesRepositoryMock.Object,
             _createPlayerMock.Object,
@@ -139,7 +169,13 @@ public class CreateGameTest
     [Fact]
     public async Task ItShouldCreateGameWithValidData()
     {
-        var actionParams = new CreateGameParams("Game 1", "Player 1", "Company 1");
+        var actionParams = new CreateGameParams(
+            "Game 1",
+            "Player 1",
+            "Company 1",
+            CompanyType.Startup
+        );
+
         var action = new CreateGame(
             _gamesRepositoryMock.Object,
             _createPlayerMock.Object,

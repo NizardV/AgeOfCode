@@ -20,7 +20,7 @@ namespace Server.Enumes
             Treasury = treasury;
         }
 
-        //#todo adapt value
+        //#todo adapt value of equilibrage
         public static readonly TypeCompany Startup = new(CompanyType.Startup, 3, 10000);
         public static readonly TypeCompany SME = new(CompanyType.SME, 10, 50000);
         public static readonly TypeCompany Corporation = new(CompanyType.Corporation, 50, 250000);

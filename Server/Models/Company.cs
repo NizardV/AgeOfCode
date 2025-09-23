@@ -13,17 +13,18 @@ public class Company(string name, int playerId, CompanyType type)
 
     public Player Player { get; set; } = null!;
 
-    public CompanyType Type { get;} = type ;
+    public CompanyType Type { get; } = type;
     public int Treasury { get; set; } = TypeCompany.From(type).Treasury;
 
     public ICollection<Employee> Employees { get; } = [];
 
-
     public CompanyOverview ToOverview()
     {
         return new CompanyOverview(
-            Id is null ? 0 : (int) Id, Name,
-            Treasury, Employees.Select(e => e.ToOverview()).ToList()
+            Id is null ? 0 : (int)Id,
+            Name,
+            Treasury,
+            Employees.Select(e => e.ToOverview()).ToList()
         );
     }
 }
