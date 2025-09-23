@@ -1,6 +1,7 @@
 using FluentResults;
 
 using Server.Actions.Contracts;
+using Server.Enumes;
 using Server.Hubs.Contracts;
 using Server.Models;
 
@@ -9,9 +10,10 @@ namespace Server.Actions;
 public sealed record JoinGameParams(
     string PlayerName,
     string CompanyName,
+    CompanyType type,
     int? GameId = null,
     Game? Game = null
-) : CreatePlayerParams(PlayerName, CompanyName, GameId, Game);
+) : CreatePlayerParams(PlayerName, CompanyName, type, GameId, Game);
 
 public class JoinGameValidator : CreatePlayerValidator;
 

@@ -5,6 +5,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.SignalR;
 
 using Server.Actions.Contracts;
+using Server.Enumes;
 using Server.Hubs;
 using Server.Hubs.Contracts;
 using Server.Models;
@@ -12,13 +13,19 @@ using Server.Persistence.Contracts;
 
 namespace Server.Actions;
 
-public sealed record CreateCompanyParams(string CompanyName, int? PlayerId = null, Player? Player = null);
+public sealed record CreateCompanyParams(
+    string CompanyName,
+    CompanyType type,
+    int? PlayerId = null,
+    Player? Player = null
+    );
 
 public class CreateCompanyValidator : AbstractValidator<CreateCompanyParams>
 {
     public CreateCompanyValidator()
     {
         RuleFor(p => p.CompanyName).NotEmpty();
+        RuleFor(p => p.type).NotEmpty().IsInEnum();
         RuleFor(p => p.PlayerId).NotEmpty().When(p => p.Player is null);
         RuleFor(p => p.Player).NotEmpty().When(p => p.PlayerId is null);
     }
@@ -41,7 +48,7 @@ public class CreateCompany(
             return Result.Fail(actionValidationResult.Errors.Select(e => e.ErrorMessage));
         }
 
-        var (companyName, playerId, player) = actionParams;
+        var (companyName, type, playerId, player) = actionParams;
 
         player ??= await playersRepository.GetById(playerId!.Value);
 
@@ -62,7 +69,7 @@ public class CreateCompany(
             return Result.Fail("'Company Name' is already in use.");
         }
 
-        var company = new Company(companyName, player.Id!.Value);
+        var company = new Company(companyName, player.Id!.Value, type );
 
         await companiesRepository.SaveCompany(company);
 

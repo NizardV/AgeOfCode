@@ -1,8 +1,9 @@
+using Server.Enumes;
 using Server.Hubs.Records;
 
 namespace Server.Models;
 
-public class Company(string name, int playerId)
+public class Company(string name, int playerId, CompanyType type)
 {
     public int? Id { get; private set; }
 
@@ -12,9 +13,11 @@ public class Company(string name, int playerId)
 
     public Player Player { get; set; } = null!;
 
-    public int Treasury { get; set; } = 1000000;
+    public CompanyType Type { get;} = type ;
+    public int Treasury { get; set; } = TypeCompany.From(type).Treasury;
 
     public ICollection<Employee> Employees { get; } = [];
+
 
     public CompanyOverview ToOverview()
     {
