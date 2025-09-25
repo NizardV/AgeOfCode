@@ -52,7 +52,7 @@ public class GameStatistics : IEndpoint
             g.Status == GameStatus.Waiting && g.PlayersCount < 3
         );
 
-        // Compute highest treasury player name among finished games
+        // Requete pour trouver le joueur avec le plus de trésorerie
         var highestTreasuryPlayer = await context.Players
             .AsNoTracking()
             .Where(p => p.Game.Status == GameStatus.Finished)

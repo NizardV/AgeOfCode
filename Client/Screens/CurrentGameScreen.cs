@@ -159,6 +159,18 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
         {
             await DisplayCompanyView();
         }
+        else
+        {
+            await DisplayEndGameScreen();
+        }
+    }
+
+        private async Task DisplayEndGameScreen()
+    {
+        var endGameScreen = new EndGameScreen(Target);
+                await endGameScreen.Show();
+        var mainMenuScreen = new MainMenuScreen(Target);
+        await mainMenuScreen.Show();
     }
 
     private async Task ActInRound()
