@@ -23,7 +23,7 @@ public class GamesRepository(WssDbContext context) : IGamesRepository
 
     public async Task<bool> IsGameNameAvailable(string gameName)
     {
-        return !await context.Games.AnyAsync(game => game.Name == gameName);
+        return !await context.Games.AnyAsync(game => game.Name.ToLower() == gameName.ToLower());
     }
 
     public async Task<Game?> GetById(int gameId)
