@@ -3,13 +3,20 @@ using FluentResults;
 using FluentValidation;
 
 using Server.Actions.Contracts;
+using Server.Enumes;
 using Server.Hubs.Contracts;
 using Server.Models;
 using Server.Persistence.Contracts;
 
 namespace Server.Actions;
 
-public record CreatePlayerParams(string PlayerName, string CompanyName, int? GameId = null, Game? Game = null);
+public record CreatePlayerParams(
+    string PlayerName,
+    string CompanyName,
+    CompanyType type,
+    int? GameId = null,
+    Game? Game = null
+    );
 
 public class CreatePlayerValidator : AbstractValidator<CreatePlayerParams>
 {
@@ -17,6 +24,7 @@ public class CreatePlayerValidator : AbstractValidator<CreatePlayerParams>
     {
         RuleFor(p => p.PlayerName).NotEmpty();
         RuleFor(p => p.CompanyName).NotEmpty();
+        RuleFor(p => p.type).NotEmpty().IsInEnum();
         RuleFor(p => p.GameId).NotEmpty().When(p => p.Game is null);
         RuleFor(p => p.Game).NotEmpty().When(p => p.GameId is null);
     }
@@ -39,7 +47,7 @@ public class CreatePlayer(
             return Result.Fail(actionValidationResult.Errors.Select(e => e.ErrorMessage));
         }
 
-        var (playerName, companyName, gameId, game) = actionParams;
+        var (playerName, companyName, type,gameId, game) = actionParams;
 
         game ??= await gamesRepository.GetById(gameId!.Value);
 
@@ -64,7 +72,7 @@ public class CreatePlayer(
 
         await playersRepository.SavePlayer(player);
 
-        var createCompanyParams = new CreateCompanyParams(companyName, Player: player);
+        var createCompanyParams = new CreateCompanyParams(companyName, type, Player: player);// possblement une erreur car il ya a pas plaierId
         var createCompanyResult = await createCompanyAction.PerformAsync(createCompanyParams);
 
         if (createCompanyResult.IsFailed)

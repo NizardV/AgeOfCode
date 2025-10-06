@@ -36,6 +36,8 @@ builder.Services.AddTransient<IAction<FinishRoundParams, Result<Round>>, FinishR
 builder.Services.AddTransient<IAction<JoinGameParams, Result<Player>>, JoinGame>();
 builder.Services.AddTransient<IAction<StartGameParams, Result<Game>>, StartGame>();
 builder.Services.AddTransient<IAction<StartRoundParams, Result<Round>>, StartRound>();
+builder.Services.AddScoped<IAction<CreateCompanyParams, Result<Server.Models.Company>>, CreateCompany>();
+builder.Services.AddScoped<IAction<CreateEmployeeParams, Result<Server.Models.Employee>>, CreateEmployee>();
 
 builder.Services.AddTransient<IGameHubService, GameHubService>();
 builder.Services.AddTransient<IMainHubService, MainHubService>();

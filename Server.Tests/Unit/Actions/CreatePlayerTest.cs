@@ -6,6 +6,7 @@ using Moq;
 
 using Server.Actions;
 using Server.Actions.Contracts;
+using Server.Enumes;
 using Server.Hubs;
 using Server.Hubs.Contracts;
 using Server.Models;
@@ -56,7 +57,7 @@ public class CreatePlayerTest
     [Fact]
     public async Task ItShouldNotCreatePlayerWithoutAPlayerName()
     {
-        var actionParams = new CreatePlayerParams("", "Company 1", 1);
+        var actionParams = new CreatePlayerParams("", "Company 1",CompanyType.Startup,1);
         var action = new CreatePlayer(
           _gamesRepositoryMock.Object,
           _playersRepositoryMock.Object,
@@ -78,7 +79,7 @@ public class CreatePlayerTest
             .Setup(r => r.GetById(It.IsAny<int>()))
             .Returns(Task.Run(() => (Game?) null));
 
-        var actionParams = new CreatePlayerParams("Player 1", "Company 1", 1);
+        var actionParams = new CreatePlayerParams("Player 1", "Company 1",CompanyType.Startup,1);
         var action = new CreatePlayer(
           _gamesRepositoryMock.Object,
           _playersRepositoryMock.Object,
@@ -100,7 +101,7 @@ public class CreatePlayerTest
             .Setup(r => r.IsPlayerNameAvailable(It.IsAny<string>(), It.IsAny<int>()))
             .Returns(Task.Run(() => false));
 
-        var actionParams = new CreatePlayerParams("Player 1", "Company 1", 1);
+        var actionParams = new CreatePlayerParams("Player 1", "Company 1",CompanyType.Startup,1);
         var action = new CreatePlayer(
           _gamesRepositoryMock.Object,
           _playersRepositoryMock.Object,
@@ -122,7 +123,7 @@ public class CreatePlayerTest
             .Setup(a => a.PerformAsync(It.IsAny<CreateCompanyParams>()))
             .Returns(Task.Run(() => Result.Fail<Company>("CreateCompany ERROR")));
 
-        var actionParams = new CreatePlayerParams("Player 1", "Company 1", 1);
+        var actionParams = new CreatePlayerParams("Player 1", "Company 1", CompanyType.Startup,1);
         var action = new CreatePlayer(
           _gamesRepositoryMock.Object,
           _playersRepositoryMock.Object,
@@ -140,7 +141,7 @@ public class CreatePlayerTest
     [Fact]
     public async Task ItShouldCreatePlayerWithValidData()
     {
-        var actionParams = new CreatePlayerParams("Player 1", "Company 1", 1);
+        var actionParams = new CreatePlayerParams("Player 1", "Company 1", CompanyType.Startup,1);
         var action = new CreatePlayer(
           _gamesRepositoryMock.Object,
           _playersRepositoryMock.Object,

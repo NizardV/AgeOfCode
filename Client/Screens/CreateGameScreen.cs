@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -70,8 +71,8 @@ public class CreateGameScreen(Window target)
         Form.OnSubmit = (_, __) => Submitted = true;
 
         Form.FormView.X = Form.FormView.Y = Pos.Center();
-        Form.FormView.Width = 50;
-        Form.FormView.Height = 9;
+        Form.FormView.Width = 70;
+        Form.FormView.Height = 30;
 
         Target.Add(Form.FormView);
 
@@ -116,10 +117,19 @@ public class CreateGameScreen(Window target)
         var playerName = Form.PlayerNameField.Text.ToString();
         var companyName = Form.CompanyNameField.Text.ToString();
         var rounds = int.Parse(Form.RoundsField.Text.ToString()!);
+        var type = (int)Form.SelectedCompanyType;
 
-        var requestBody = new { gameName, playerName, companyName, rounds };
+
+        var requestBody = new { gameName, playerName, companyName,type, rounds };
         var request = httpClient.PostAsJsonAsync("/games", requestBody);
+
+        Trace.WriteLine("requete");
+        Trace.WriteLine(request);
+        Trace.WriteLine("requete corp");
+        Trace.WriteLine(requestBody);
+
         var response = await request;
+
 
         if (!response.IsSuccessStatusCode)
         {
@@ -148,6 +158,7 @@ public class CreateGameForm
             _onSubmit = value;
         }
     }
+
     public EventHandler<HandledEventArgs> OnReturn
     {
         get => _onReturn;
@@ -159,126 +170,77 @@ public class CreateGameForm
         }
     }
 
+    //#todo check the nessesity of public and not private
     public View FormView { get; }
-    public View ButtonsView { get; }
     public Button SubmitButton { get; }
     public Button ReturnButton { get; }
     public Label GameNameLabel { get; }
     public Label PlayerNameLabel { get; }
     public Label CompanyNameLabel { get; }
     public Label RoundsLabel { get; }
+    public Label TypeLabel { get; }
     public TextField GameNameField { get; }
     public TextField PlayerNameField { get; }
     public TextField CompanyNameField { get; }
     public TextField RoundsField { get; }
 
+    public RadioGroup TypeGroup { get; }
+
+    public enum CompanyType { Startup = 0, SME = 1, Corporation = 2, Enterprise = 3 }
+
+    public CompanyType SelectedCompanyType => (CompanyType)TypeGroup.SelectedItem;
+
     public CreateGameForm()
     {
-        GameNameLabel = new Label()
+        GameNameLabel     = new Label { X = 0, Y = 0, Width = 20, Text = "Game name :" };
+        PlayerNameLabel   = new Label { X = Pos.Left(GameNameLabel),   Y = Pos.Bottom(GameNameLabel) + 1, Width = 20, Text = "Player name :" };
+        CompanyNameLabel  = new Label { X = Pos.Left(PlayerNameLabel), Y = Pos.Bottom(PlayerNameLabel) + 1, Width = 20, Text = "Company name :" };
+        RoundsLabel       = new Label { X = Pos.Left(CompanyNameLabel),Y = Pos.Bottom(CompanyNameLabel) + 1, Width = 20, Text = "Rounds (15 - 100) :" };
+        TypeLabel         = new Label { X = Pos.Left(RoundsLabel),     Y = Pos.Bottom(RoundsLabel) + 1, Width = 20, Text = "Company Type" };
+
+        GameNameField     = new TextField { X = Pos.Right(GameNameLabel),    Y = Pos.Top(GameNameLabel),    Width = Dim.Fill(), Text = "" };
+        PlayerNameField   = new TextField { X = Pos.Right(PlayerNameLabel),  Y = Pos.Top(PlayerNameLabel),  Width = Dim.Fill(), Text = "" };
+        CompanyNameField  = new TextField { X = Pos.Right(CompanyNameLabel), Y = Pos.Top(CompanyNameLabel), Width = Dim.Fill(), Text = "" };
+        RoundsField       = new TextField { X = Pos.Right(RoundsLabel),      Y = Pos.Top(RoundsLabel),      Width = Dim.Fill(), Text = "" };
+
+
+        TypeGroup = new RadioGroup()
         {
-            X = 0,
-            Y = 0,
-            Width = 20,
-            Text = "Game name :"
+            X = Pos.Left(TypeLabel),
+            Y = Pos.Bottom(TypeLabel),
+            Width = 40,
+            Height = 4,
+            RadioLabels = new[] { "Startup", "SME", "Corporation", "Enterprise" },
+            SelectedItem = 0
         };
 
-        PlayerNameLabel = new Label()
-        {
-            X = Pos.Left(GameNameLabel),
-            Y = Pos.Bottom(GameNameLabel) + 1,
-            Width = 20,
-            Text = "Player name :"
-        };
 
-        CompanyNameLabel = new Label()
+        SubmitButton = new Button
         {
-            X = Pos.Left(PlayerNameLabel),
-            Y = Pos.Bottom(PlayerNameLabel) + 1,
-            Width = 20,
-            Text = "Company name :"
-        };
-
-        RoundsLabel = new Label()
-        {
-            X = Pos.Left(CompanyNameLabel),
-            Y = Pos.Bottom(CompanyNameLabel) + 1,
-            Width = 20,
-            Text = "Rounds (15 - 100) :"
-        };
-
-        GameNameField = new TextField()
-        {
-            X = Pos.Right(GameNameLabel),
-            Y = Pos.Top(GameNameLabel),
-            Width = Dim.Fill(),
-            Text = ""
-        };
-
-        PlayerNameField = new TextField()
-        {
-            X = Pos.Right(PlayerNameLabel),
-            Y = Pos.Top(PlayerNameLabel),
-            Width = Dim.Fill(),
-            Text = ""
-        };
-
-        CompanyNameField = new TextField()
-        {
-            X = Pos.Right(CompanyNameLabel),
-            Y = Pos.Top(CompanyNameLabel),
-            Width = Dim.Fill(),
-            Text = ""
-        };
-
-        RoundsField = new TextField()
-        {
-            X = Pos.Right(RoundsLabel),
-            Y = Pos.Top(RoundsLabel),
-            Width = Dim.Fill(),
-            Text = ""
-        };
-
-        ButtonsView = new View()
-        {
-            Width = 1,
-            Height = 1,
             X = Pos.Center(),
-            Y = Pos.Bottom(RoundsLabel) + 1
-        };
-
-        SubmitButton = new Button()
-        {
+            Y = Pos.Bottom(TypeGroup) + 1,
             Text = "Submit",
             IsDefault = true
         };
 
-        ReturnButton = new Button()
+        ReturnButton = new Button
         {
+            X = Pos.Right(SubmitButton),
+            Y = Pos.Bottom(TypeGroup) + 1,
             Text = "Return",
-            IsDefault = false,
-            X = Pos.Right(SubmitButton) + 1
+            IsDefault = false
         };
 
         SubmitButton.Accept += OnSubmit;
         ReturnButton.Accept += OnReturn;
 
-        ButtonsView.Add(SubmitButton, ReturnButton);
-
-        var submitButtonWidth = SubmitButton.Width;
-        var returnButtonWidth = ReturnButton.Width;
-
-        ButtonsView.Width = submitButtonWidth + returnButtonWidth + 1;
-
-        FormView = new View()
-        {
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
+        FormView = new View { Width = Dim.Fill(), Height = Dim.Fill() };
 
         FormView.Add(
             GameNameLabel, PlayerNameLabel, CompanyNameLabel, RoundsLabel,
             GameNameField, PlayerNameField, CompanyNameField, RoundsField,
-            ButtonsView
+            TypeLabel, TypeGroup,
+            SubmitButton, ReturnButton
         );
     }
 }
