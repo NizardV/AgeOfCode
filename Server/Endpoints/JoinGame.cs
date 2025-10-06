@@ -1,9 +1,7 @@
 using FluentResults;
-
 using Server.Actions;
 using Server.Actions.Contracts;
 using Server.Endpoints.Contracts;
-using Server.Enumes;
 using Server.Models;
 using Server.Persistence;
 
@@ -18,18 +16,12 @@ public class JoinGame : IEndpoint
 
     public static async Task<IResult> Handler(
         int gameId,
-        CompanyType type,
         JoinGameParams actionParams,
         WssDbContext context,
         IAction<JoinGameParams, Result<Player>> joinGameAction
     )
     {
-        actionParams = new JoinGameParams(
-            actionParams.PlayerName,
-            actionParams.CompanyName,
-            actionParams.type,
-            GameId: gameId
-        );
+        actionParams = actionParams with { GameId = gameId };
 
         using var transaction = context.Database.BeginTransaction();
 
