@@ -36,6 +36,16 @@ public class CreateEmployee(
     {
         var rnd = new Random();
 
+        var nameList = new List<string>
+        {
+            "John", "Jane", "Bob", "Alice", "Tom", "Sara", "Mike", "Lily", "David", "Emma"
+        };
+
+        var lastNameList = new List<string>
+        {
+            "Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez"
+        };
+
         var actionValidator = new CreateEmployeeValidator();
         var actionValidationResult = await actionValidator.ValidateAsync(actionParams);
 
