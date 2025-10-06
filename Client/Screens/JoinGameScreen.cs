@@ -174,7 +174,7 @@ public class JoinGameScreen(Window target)
 
         Form.FormView.X = Form.FormView.Y = Pos.Center();
         Form.FormView.Width = 50;
-        Form.FormView.Height = 9;
+        Form.FormView.Height = 12;
 
         Target.Add(Form.FormView);
 
@@ -217,10 +217,12 @@ public class JoinGameScreen(Window target)
 
         var playerName = Form.PlayerNameField.Text.ToString();
         var companyName = Form.CompanyNameField.Text.ToString();
+        var type = (int)Form.SelectedCompanyType;
 
-        var requestBody = new { playerName, companyName };
-        var request = httpClient.PostAsJsonAsync($"/games/{GameId}/join", requestBody);
-        var response = await request;
+        var requestBody = new { playerName, companyName, type };
+
+        var response = await httpClient.PostAsJsonAsync($"/games/{GameId}/join", requestBody);
+
 
         if (!response.IsSuccessStatusCode)
         {
@@ -269,108 +271,72 @@ public class JoinGameForm
     public EventHandler<HandledEventArgs> OnSubmit
     {
         get => _onSubmit;
-        set
-        {
-            SubmitButton.Accept -= _onSubmit;
-            SubmitButton.Accept += value;
-            _onSubmit = value;
-        }
+        set { SubmitButton.Accept -= _onSubmit; SubmitButton.Accept += value; _onSubmit = value; }
     }
     public EventHandler<HandledEventArgs> OnReturn
     {
         get => _onReturn;
-        set
-        {
-            ReturnButton.Accept -= _onReturn;
-            ReturnButton.Accept += value;
-            _onReturn = value;
-        }
+        set { ReturnButton.Accept -= _onReturn; ReturnButton.Accept += value; _onReturn = value; }
     }
 
     public View FormView { get; }
-    public View ButtonsView { get; }
     public Button SubmitButton { get; }
     public Button ReturnButton { get; }
     public Label PlayerNameLabel { get; }
     public Label CompanyNameLabel { get; }
+    public Label TypeLabel { get; }
     public TextField PlayerNameField { get; }
     public TextField CompanyNameField { get; }
+    public RadioGroup TypeGroup { get; }
+
+    public enum CompanyType { Startup = 0, SME = 1, Corporation = 2, Enterprise = 3 }
+    public CompanyType SelectedCompanyType => (CompanyType)TypeGroup.SelectedItem;
 
     public JoinGameForm()
     {
-        PlayerNameLabel = new Label()
+        PlayerNameLabel = new Label { X = 0, Y = 0, Width = 20, Text = "Player name :" };
+        CompanyNameLabel = new Label { X = Pos.Left(PlayerNameLabel), Y = Pos.Bottom(PlayerNameLabel) + 1, Width = 20, Text = "Company name :" };
+
+        PlayerNameField = new TextField { X = Pos.Right(PlayerNameLabel), Y = Pos.Top(PlayerNameLabel), Width = Dim.Fill(), Text = "" };
+        CompanyNameField = new TextField { X = Pos.Right(CompanyNameLabel), Y = Pos.Top(CompanyNameLabel), Width = Dim.Fill(), Text = "" };
+
+        TypeLabel = new Label { X = Pos.Left(CompanyNameLabel), Y = Pos.Bottom(CompanyNameLabel) + 1, Width = 20, Text = "Company Type" };
+        TypeGroup = new RadioGroup
         {
-            X = 0,
-            Y = 0,
-            Width = 20,
-            Text = "Player name :"
+            X = Pos.Left(TypeLabel),
+            Y = Pos.Bottom(TypeLabel),
+            Width = 40,
+            Height = 4,
+            RadioLabels = new[] { "Startup", "SME", "Corporation", "Enterprise" },
+            SelectedItem = 0
         };
 
-        CompanyNameLabel = new Label()
+        SubmitButton = new Button
         {
-            X = Pos.Left(PlayerNameLabel),
-            Y = Pos.Bottom(PlayerNameLabel) + 1,
-            Width = 20,
-            Text = "Company name :"
-        };
-
-        PlayerNameField = new TextField()
-        {
-            X = Pos.Right(PlayerNameLabel),
-            Y = Pos.Top(PlayerNameLabel),
-            Width = Dim.Fill(),
-            Text = ""
-        };
-
-        CompanyNameField = new TextField()
-        {
-            X = Pos.Right(CompanyNameLabel),
-            Y = Pos.Top(CompanyNameLabel),
-            Width = Dim.Fill(),
-            Text = ""
-        };
-
-        ButtonsView = new View()
-        {
-            Width = 1,
-            Height = 1,
             X = Pos.Center(),
-            Y = Pos.Bottom(CompanyNameLabel) + 1
-        };
-
-        SubmitButton = new Button()
-        {
+            Y = Pos.Bottom(TypeGroup) + 1,
             Text = "Submit",
             IsDefault = true
         };
 
-        ReturnButton = new Button()
+        ReturnButton = new Button
         {
+            X = Pos.Right(SubmitButton),
+            Y = Pos.Bottom(TypeGroup) + 1,
             Text = "Return",
-            IsDefault = false,
-            X = Pos.Right(SubmitButton) + 1
+            IsDefault = false
         };
 
         SubmitButton.Accept += OnSubmit;
         ReturnButton.Accept += OnReturn;
 
-        ButtonsView.Add(SubmitButton, ReturnButton);
 
-        var submitButtonWidth = SubmitButton.Width;
-        var returnButtonWidth = ReturnButton.Width;
-
-        ButtonsView.Width = submitButtonWidth + returnButtonWidth + 1;
-
-        FormView = new View()
-        {
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
-
+        FormView = new View { Width = Dim.Fill(), Height = Dim.Fill() };
         FormView.Add(
             PlayerNameLabel, CompanyNameLabel,
             PlayerNameField, CompanyNameField,
-            ButtonsView
+            TypeLabel, TypeGroup,
+            SubmitButton,ReturnButton
         );
     }
 }
