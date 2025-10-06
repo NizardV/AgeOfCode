@@ -27,6 +27,10 @@ public class FinishGame(IGameHubService gameHubService) : IAction<FinishGamePara
 {
     public Task<Result<Game>> PerformAsync(FinishGameParams actionParams)
     {
-        throw new NotImplementedException();
+        var (_, game) = actionParams;
+
+        game!.Status = GameStatus.Finished;
+
+        return Task.FromResult(Result.Ok(game));
     }
 }

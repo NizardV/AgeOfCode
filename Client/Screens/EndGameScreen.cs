@@ -16,7 +16,14 @@ internal class EndGameScreen (Window target)
     public async Task Show()
     {
         await BeforeShow();
-        await ShowVictory();
+        if (1==1)
+        {
+            await ShowVictory();
+        }
+        else
+        {
+            await ShowDefeat();
+        }
     }
 
     private Task BeforeShow()

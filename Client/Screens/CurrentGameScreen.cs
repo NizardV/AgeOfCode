@@ -77,7 +77,7 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
             CurrentGameLoading = false;
             CurrentRoundAction = null;
             if (data.Status == "InProgress") { CurrentGameStarted = true; }
-            if (data.Status == "Ended") { CurrentGameEnded = true; }
+            if (data.Status == "Finished") { CurrentGameEnded = true; }
         });
 
         await hubConnection.StartAsync();
