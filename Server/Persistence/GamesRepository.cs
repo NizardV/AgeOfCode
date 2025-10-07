@@ -39,8 +39,11 @@ public class GamesRepository(WssDbContext context) : IGamesRepository
             .Include(g => g.Players).ThenInclude(p => p.Company).ThenInclude(c => c.Employees).ThenInclude(e => e.Skills)
             .Include(g => g.Consultants).ThenInclude(c => c.Skills)
             .Include(g => g.RoundsCollection)
+            .Include(g => g.Tenders)
             .FirstOrDefaultAsync(g => g.Id == gameId);
     }
+
+
 
     public async Task<Game?> GetByPlayerId(int playerId)
     {

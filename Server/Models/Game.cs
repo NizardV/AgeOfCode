@@ -25,30 +25,28 @@ public class Game(string name, int rounds = 15)
 
     public ICollection<Consultant> Consultants { get; } = [];
 
-    public bool CanBeJoined()
-    {
-        return Status == GameStatus.Waiting && Players.Count < 3;
-    }
+    public ICollection<Tender> Tenders { get; } = new List<Tender>();
 
-    public bool CanBeStarted()
-    {
-        return Status == GameStatus.Waiting;
-    }
+    public bool CanBeJoined() => Status == GameStatus.Waiting && Players.Count < 3;
+    public bool CanBeStarted() => Status == GameStatus.Waiting;
 
     public bool CanStartANewRound()
-    {
-        return
-            Status == GameStatus.InProgress &&
-            RoundsCollection.Count < Rounds;
-    }
+        => Status == GameStatus.InProgress && RoundsCollection.Count < Rounds;
 
     public GameOverview ToOverview()
     {
         return new GameOverview(
-            Id is null ? 0 : (int) Id, Name, Players.Select(p => p.ToOverview()).ToList(),
-            Players.Count, 3, Rounds, RoundsCollection.Count,
-            Status.ToString(), RoundsCollection.Select(r => r.ToOverview()).ToList(),
-            Consultants.Select(c => c.ToOverview()).ToList()
+            Id ?? 0,
+            Name,
+            Players.Select(p => p.ToOverview()).ToList(),
+            Players.Count,
+            3,
+            Rounds,
+            RoundsCollection.Count,
+            Status.ToString(),
+            RoundsCollection.Select(r => r.ToOverview()).ToList(),
+            Consultants.Select(c => c.ToOverview()).ToList(),
+            Tenders.Select(t => t.ToOverview()).ToList()
         );
     }
 }

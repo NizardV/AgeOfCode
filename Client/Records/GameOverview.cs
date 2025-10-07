@@ -1,3 +1,6 @@
+// Client/Records/GameOverview.cs
+using System.Collections.Generic;
+
 namespace Client.Records;
 
 public sealed record GameOverview(
@@ -10,7 +13,8 @@ public sealed record GameOverview(
     int CurrentRound,
     string Status,
     ICollection<RoundOverview> Rounds,
-    ICollection<ConsultantOverview> Consultants
+    ICollection<ConsultantOverview> Consultants,
+    ICollection<TenderOverview> Tenders
 );
 
 public sealed record PlayerOverview(
@@ -26,7 +30,7 @@ public sealed record CompanyOverview(
     ICollection<EmployeeOverview> Employees
 );
 
-public record ConsultantOverview(
+public sealed record ConsultantOverview(
     int Id,
     string Name,
     int SalaryRequirement,
@@ -54,4 +58,15 @@ public sealed record RoundActionOverview(
     string ActionType,
     string Payload,
     int PlayerId
+);
+
+public sealed record TenderOverview(
+    int Id,
+    int CompanyId,
+    int Gain,
+    int Time,
+    int ContTime,
+    bool IsStart,
+    bool IsEnd,
+    ICollection<SkillOverview> Skills
 );

@@ -10,7 +10,9 @@ public sealed record GameOverview(
     int CurrentRound,
     string Status,
     ICollection<RoundOverview> Rounds,
-    ICollection<ConsultantOverview> Consultants
+    ICollection<ConsultantOverview> Consultants,
+    // ✅ Nouvel ensemble d'appels d'offres visibles au niveau du jeu
+    ICollection<TenderOverview> Tenders
 );
 
 public sealed record PlayerOverview(
@@ -40,6 +42,7 @@ public sealed record EmployeeOverview(
     ICollection<SkillOverview> Skills
 );
 
+// ✅ Toujours la même structure de skill partagée dans tout le GameOverview
 public sealed record SkillOverview(
     string Name,
     int Level
@@ -54,4 +57,15 @@ public sealed record RoundActionOverview(
     string ActionType,
     string Payload,
     int PlayerId
+);
+
+public sealed record TenderOverview(
+    int Id,
+    int CompanyId,
+    int Gain,
+    int Time,
+    int ContTime,
+    bool IsStart,
+    bool IsEnd,
+    ICollection<SkillOverview> Skills
 );

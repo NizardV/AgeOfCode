@@ -17,6 +17,7 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
     public DbSet<Player> Players { get; set; } = null!;
     public DbSet<Round> Rounds { get; set; } = null!;
     public DbSet<Skill> Skills { get; set; } = null!;
+    public DbSet<Tender> Tenders { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -41,11 +42,13 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
             e.HasKey(e => e.Id);
             e.Property(e => e.Name).HasColumnType("varchar(255)");
             e.Property(e => e.Treasury).HasColumnType("integer").HasDefaultValue(1000000);
+
             e.HasOne(e => e.Player)
                 .WithOne(e => e.Company)
                 .HasForeignKey<Company>(e => e.PlayerId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.HasMany(e => e.Employees)
                 .WithOne(e => e.Company)
                 .HasForeignKey(e => e.CompanyId);
@@ -56,10 +59,12 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
             e.ToTable("consultants");
             e.HasKey(e => e.Id);
             e.Property(e => e.Name).HasColumnType("varchar(255)");
+
             e.HasOne(e => e.Game)
-                .WithMany()
+                .WithMany(g => g.Consultants)
                 .HasForeignKey(e => e.GameId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.OwnsMany(e => e.Skills, builder => builder.ToJson());
         });
 
@@ -68,15 +73,18 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
             e.ToTable("employees");
             e.HasKey(e => e.Id);
             e.Property(e => e.Name).HasColumnType("varchar(255)");
+
             e.HasOne(e => e.Game)
-                .WithMany()
+                .WithMany() // pas de nav Game.Employees
                 .HasForeignKey(e => e.GameId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.HasOne(e => e.Company)
-                .WithMany(e => e.Employees)
+                .WithMany(c => c.Employees)
                 .HasForeignKey(e => e.CompanyId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.OwnsMany(e => e.Skills, builder => builder.ToJson());
         });
 
@@ -90,15 +98,22 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
                 .HasColumnType("varchar(255)")
                 .HasDefaultValue(GameStatus.Waiting)
                 .HasConversion(new EnumToStringConverter<GameStatus>());
-            e.HasMany(e => e.Players)
-                .WithOne(e => e.Game)
-                .HasForeignKey(e => e.GameId);
-            e.HasMany(e => e.Consultants)
-                .WithOne(e => e.Game)
-                .HasForeignKey(e => e.GameId);
-            e.HasMany(e => e.RoundsCollection)
-                .WithOne(e => e.Game)
-                .HasForeignKey(e => e.GameId);
+
+            e.HasMany(g => g.Players)
+                .WithOne(p => p.Game)
+                .HasForeignKey(p => p.GameId);
+
+            e.HasMany(g => g.Consultants)
+                .WithOne(c => c.Game)
+                .HasForeignKey(c => c.GameId);
+
+            e.HasMany(g => g.RoundsCollection)
+                .WithOne(r => r.Game)
+                .HasForeignKey(r => r.GameId);
+
+            e.HasMany(g => g.Tenders)
+                .WithOne(t => t.Game)
+                .HasForeignKey(t => t.GameId);
         });
 
         modelBuilder.Entity<Player>(e =>
@@ -106,14 +121,16 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
             e.ToTable("players");
             e.HasKey(e => e.Id);
             e.Property(e => e.Name).HasColumnType("varchar(255)");
+
             e.HasOne(e => e.Game)
-                .WithMany(e => e.Players)
+                .WithMany(g => g.Players)
                 .HasForeignKey(e => e.GameId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.HasOne(e => e.Company)
-                .WithOne(e => e.Player)
-                .HasForeignKey<Company>(e => e.PlayerId);
+                .WithOne(c => c.Player)
+                .HasForeignKey<Company>(c => c.PlayerId);
         });
 
         modelBuilder.Entity<Round>(e =>
@@ -121,9 +138,11 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
             e.ToTable("rounds");
             e.HasKey(e => e.Id);
             e.Property(e => e.Order).HasColumnType("integer");
+
             e.HasOne(e => e.Game)
-                .WithMany(e => e.RoundsCollection)
+                .WithMany(g => g.RoundsCollection)
                 .HasForeignKey(e => e.GameId);
+
             e.OwnsMany(e => e.Actions, builder => builder.ToJson());
         });
 
@@ -154,6 +173,28 @@ public class WssDbContext(DbContextOptions options, IConfiguration configuration
                 new Skill("GraphQL") { Id = 19 },
                 new Skill("REST APIs") { Id = 20 }
             );
+        });
+
+        // ----- Tender (nouveau) -----
+        modelBuilder.Entity<Tender>(e =>
+        {
+            e.ToTable("tenders");
+            e.HasKey(x => x.Id);
+
+            // FK → Game (pour Game.Tenders)
+            e.HasOne(x => x.Game)
+                .WithMany(g => g.Tenders)
+                .HasForeignKey(x => x.GameId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FK → Company
+            e.HasOne(x => x.Company)
+                .WithMany() // si tu ajoutes ICollection<Tender> Tenders dans Company: .WithMany(c => c.Tenders)
+                .HasForeignKey(x => x.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Skills en JSON (même pattern que Employee/Consultant)
+            e.OwnsMany(x => x.Skills, builder => builder.ToJson());
         });
     }
 }

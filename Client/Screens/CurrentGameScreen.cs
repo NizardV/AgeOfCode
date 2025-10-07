@@ -28,6 +28,9 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
 
     private CurrentGameActionList.Action? CurrentRoundAction = null;
 
+    // ✅ payload JSON optionnel (ex: { "tenderId": 123 })
+    private string? CurrentRoundActionPayloadJson = null;
+
     public async Task Show()
     {
         await BeforeShow();
@@ -39,9 +42,7 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
     private Task BeforeShow()
     {
         Target.RemoveAll();
-
         ReloadWindowTitle();
-
         return Task.CompletedTask;
     }
 
@@ -63,7 +64,6 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
                         clientHandler.ServerCertificateCustomValidationCallback +=
                             (sender, certificate, chain, sslPolicyErrors) => { return true; };
                     }
-
                     return message;
                 };
             })
@@ -76,8 +76,10 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
             ReloadWindowTitle();
             CurrentGameLoading = false;
             CurrentRoundAction = null;
+
             if (data.Status == "InProgress") { CurrentGameStarted = true; }
-            if (data.Status == "Ended") { CurrentGameEnded = true; }
+            // ✅ tolère "Finished" ou "Ended"
+            if (data.Status is "Finished" or "Ended") { CurrentGameEnded = true; }
 
             Application.Invoke(async () =>
             {
@@ -91,21 +93,14 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
 
         await hubConnection.StartAsync();
 
-        var loadingDialog = new Dialog()
-        {
-            Width = 17,
-            Height = 3
-        };
-
-        var loadingText = new Label()
+        var loadingDialog = new Dialog { Title = "Loading" };
+        var loadingText = new Label
         {
             Text = "Loading game...",
             X = Pos.Center(),
             Y = Pos.Center()
         };
-
         loadingDialog.Add(loadingText);
-
         Target.Add(loadingDialog);
 
         while (CurrentGameLoading) { await Task.Delay(100); }
@@ -118,7 +113,6 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
         Target.RemoveAll();
 
         var mainView = new CurrentGameMainView(CurrentGame!, PlayerName);
-
         CurrentView = mainView;
 
         mainView.X = mainView.Y = Pos.Center();
@@ -137,12 +131,25 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
         Target.RemoveAll();
 
         var companyView = new CurrentGameCompanyView(CurrentGame!, PlayerName);
-
         CurrentView = companyView;
 
         companyView.X = companyView.Y = 5;
         companyView.Width = companyView.Height = Dim.Fill() - 5;
-        companyView.OnRoundAction = (_, roundAction) => { CurrentRoundAction = roundAction; };
+
+        // 🪝 action sélectionnée depuis la colonne Actions
+        companyView.OnRoundAction = (_, roundAction) =>
+        {
+            CurrentRoundAction = roundAction;
+            // si ce n’est PAS un tender, on purge le payload
+            if (roundAction != CurrentGameActionList.Action.ParticipateInCallForTenders)
+                CurrentRoundActionPayloadJson = null;
+        };
+
+        // 🪝 payload JSON (ex: { tenderId: 123 }) envoyé par la sélection de tender
+        companyView.OnRoundActionPayload = (_, payloadJson) =>
+        {
+            CurrentRoundActionPayloadJson = payloadJson;
+        };
 
         Target.Add(companyView);
 
@@ -155,11 +162,7 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
 
         await ActInRound();
 
-        while (
-            !CurrentGameEnded &&
-            // CurrentGame!.CurrentRound != CurrentGame.MaximumRounds &&
-            CurrentGame!.CurrentRound == lastRound
-        )
+        while (!CurrentGameEnded && CurrentGame!.CurrentRound == lastRound)
         {
             await Task.Delay(100);
         }
@@ -174,21 +177,14 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
     {
         Target.RemoveAll();
 
-        var loadingDialog = new Dialog()
-        {
-            Width = 18,
-            Height = 3
-        };
-
-        var loadingText = new Label()
+        var loadingDialog = new Dialog { Title = "Waiting" };
+        var loadingText = new Label
         {
             Text = "Waiting for other players...",
             X = Pos.Center(),
             Y = Pos.Center()
         };
-
         loadingDialog.Add(loadingText);
-
         Target.Add(loadingDialog);
 
         var httpHandler = new HttpClientHandler
@@ -201,12 +197,15 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
             BaseAddress = new Uri($"{WssConfig.WebApiServerScheme}://{WssConfig.WebApiServerDomain}:{WssConfig.WebApiServerPort}"),
         };
 
-        var request = httpClient.PostAsJsonAsync($"/rounds/{CurrentGame!.Rounds.MaxBy(r => r.Id)!.Id}/act", new
-        {
-            ActionType = CurrentRoundAction!.ToString(),
-            ActionPayload = "{}",
-            PlayerId = CurrentGame.Players.First(p => p.Name == PlayerName).Id
-        });
+        var request = httpClient.PostAsJsonAsync(
+            $"/rounds/{CurrentGame!.Rounds.MaxBy(r => r.Id)!.Id}/act",
+            new
+            {
+                ActionType = CurrentRoundAction!.ToString(),
+                ActionPayload = CurrentRoundActionPayloadJson ?? "{}", // ✅ payload JSON si dispo
+                PlayerId = CurrentGame.Players.First(p => p.Name == PlayerName).Id
+            }
+        );
 
         await request;
     }
@@ -324,7 +323,12 @@ public class CurrentGameMainView : CurrentGameView
 
         Add(Status);
 
-        var statusLabel = new Label() { Text = Game.Status is null ? "" : Game.Status, X = Pos.Center(), Y = Pos.Center() };
+        var statusLabel = new Label
+        {
+            Text = Game.Status ?? "",
+            X = Pos.Center(),
+            Y = Pos.Center()
+        };
 
         Status.Add(statusLabel);
     }
@@ -345,7 +349,6 @@ public class CurrentGameMainView : CurrentGameView
         StartButton.Accept += async (_, __) => await StartGame();
 
         Add(StartButton);
-
         StartButton.SetFocus();
     }
 
@@ -353,13 +356,8 @@ public class CurrentGameMainView : CurrentGameView
     {
         RemoveAll();
 
-        var loadingDialog = new Dialog()
-        {
-            Width = 18,
-            Height = 3
-        };
-
-        var loadingText = new Label()
+        var loadingDialog = new Dialog { Title = "Starting" };
+        var loadingText = new Label
         {
             Text = "Starting game...",
             X = Pos.Center(),
@@ -367,7 +365,6 @@ public class CurrentGameMainView : CurrentGameView
         };
 
         loadingDialog.Add(loadingText);
-
         Add(loadingDialog);
 
         var httpHandler = new HttpClientHandler
@@ -380,8 +377,7 @@ public class CurrentGameMainView : CurrentGameView
             BaseAddress = new Uri($"{WssConfig.WebApiServerScheme}://{WssConfig.WebApiServerDomain}:{WssConfig.WebApiServerPort}"),
         };
 
-        var request = httpClient.PostAsJsonAsync($"/games/{Game.Id}/start", new { });
-        var response = await request;
+        var response = await httpClient.PostAsJsonAsync($"/games/{Game.Id}/start", new { });
 
         if (!response.IsSuccessStatusCode)
         {
@@ -399,7 +395,11 @@ public class CurrentGameCompanyView : CurrentGameView
     private GameOverview Game;
     private PlayerOverview CurrentPlayer;
     private readonly string PlayerName;
+
     public EventHandler<CurrentGameActionList.Action> OnRoundAction = (_, __) => { };
+
+    // ✅ nouvel event : pour passer un payload JSON quand on choisit un tender
+    public EventHandler<string> OnRoundActionPayload = (_, __) => { };
 
     private View? Header;
     private View? Body;
@@ -487,7 +487,7 @@ public class CurrentGameCompanyView : CurrentGameView
         };
 
         SetupEmployees();
-        //SetupConsultants();
+        SetupConsultants();
         SetupCallForTenders();
 
         Body!.Add(LeftBody);
@@ -612,53 +612,51 @@ public class CurrentGameCompanyView : CurrentGameView
         employeesTree.ExpandAll();
 
         Employees.Add(employeesTree);
-
         LeftBody!.Add(Employees);
     }
 
-    //private void SetupConsultants()
-    //{
-    //    Consultants = new()
-    //    {
-    //        Title = "Consultants",
-    //        X = Pos.Left(Employees!),
-    //        Y = Pos.Bottom(Employees!) + 1,
-    //        Width = Dim.Fill(),
-    //        Height = Dim.Percent(30)
-    //    };
+    private void SetupConsultants()
+    {
+        Consultants = new()
+        {
+            Title = "Consultants",
+            X = Pos.Left(Employees!),
+            Y = Pos.Bottom(Employees!) + 1,
+            Width = Dim.Fill(),
+            Height = Dim.Percent(30)
+        };
 
-    //    var consultantsTree = new TreeView()
-    //    {
-    //        X = 0,
-    //        Y = 0,
-    //        Width = Dim.Fill(),
-    //        Height = Dim.Fill(),
-    //        BorderStyle = LineStyle.Dotted
-    //    };
+        var consultantsTree = new TreeView()
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            BorderStyle = LineStyle.Dotted
+        };
 
-    //    var consultantsData = new List<TreeNode>();
+        var consultantsData = new List<TreeNode>();
 
-    //    foreach (var consultant in Game.Consultants.ToList())
-    //    {
-    //        var node = new TreeNode($"{consultant.Name} | {consultant.SalaryRequirement} $");
-    //        var skills = consultant.Skills.ToList();
+        foreach (var consultant in Game.Consultants.ToList())
+        {
+            var node = new TreeNode($"{consultant.Name} | {consultant.SalaryRequirement} $");
+            var skills = consultant.Skills.ToList();
 
-    //        foreach (var skill in skills)
-    //        {
-    //            node.Children.Add(new TreeNode($"{skill.Name} | {skill.Level}"));
-    //        }
+            foreach (var skill in skills)
+            {
+                node.Children.Add(new TreeNode($"{skill.Name} | {skill.Level}"));
+            }
 
-    //        consultantsData.Add(node);
-    //    }
+            consultantsData.Add(node);
+        }
 
-    //    consultantsTree.BorderStyle = LineStyle.None;
-    //    consultantsTree.AddObjects(consultantsData);
-    //    consultantsTree.ExpandAll();
+        consultantsTree.BorderStyle = LineStyle.None;
+        consultantsTree.AddObjects(consultantsData);
+        consultantsTree.ExpandAll();
 
-    //    Consultants.Add(consultantsTree);
-
-    //    LeftBody!.Add(Consultants);
-    //}
+        Consultants.Add(consultantsTree);
+        LeftBody!.Add(Consultants);
+    }
 
     private void SetupCallForTenders()
     {
@@ -671,6 +669,128 @@ public class CurrentGameCompanyView : CurrentGameView
             Height = Dim.Percent(30)
         };
 
+        // Filtre : tenders de la company du joueur
+        var myCompanyId = CurrentPlayer.Company.Id;
+        var myTenders = Game.Tenders.Where(t => t.CompanyId == myCompanyId).ToList();
+
+        var dt = new DataTable();
+        dt.Columns.Add("Name");
+        dt.Columns.Add("Gain");
+        dt.Columns.Add("Skills");
+        dt.Columns.Add("In Progress");
+        dt.Columns.Add("Remaining");
+
+        foreach (var t in myTenders)
+        {
+            dt.Rows.Add([
+                $"Tender #{t.Id}",
+                $"{t.Gain}",
+                FormatSkills(t.Skills),
+                t.IsStart ? "Yes" : "No",
+                $"{t.ContTime}/{t.Time}"
+            ]);
+        }
+
+        var src = new DataTableSource(dt);
+        var table = new TableView()
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            Table = src,
+            Style = new TableStyle
+            {
+                ShowVerticalCellLines = true,
+                ShowHorizontalHeaderOverline = true,
+                ShowHorizontalHeaderUnderline = true,
+                ExpandLastColumn = true
+            }
+        };
+
+        // Activation = tentative de prise du tender
+        table.CellActivated += async (_, args) =>
+        {
+            var row = args.Row;
+            if (row < 0 || row >= myTenders.Count) return;
+
+            var tender = myTenders[row];
+
+            // Vérif compétences : somme des employés >= exigences tender
+            if (!HasRequiredSkills(CurrentPlayer.Company.Employees, tender.Skills))
+            {
+                var dlg = new Dialog { Title = "Tender" };
+
+                var msg = new Label
+                {
+                    Text = "Not enough required skills.",
+                    X = Pos.Center(),
+                    Y = Pos.Center() - 1
+                };
+
+                var ok = new Button
+                {
+                    Text = "OK",
+                    IsDefault = true,
+                    X = Pos.Center(),
+                    Y = Pos.Center() + 1
+                };
+
+                ok.Accept += (_, __) => Application.RequestStop();
+
+                dlg.Add(msg, ok);
+                Application.Run(dlg);
+                return;
+            }
+
+            // Confirmation
+            var confirm = new Dialog { Title = "Confirm" };
+
+            var line1 = new Label
+            {
+                Text = "Do you want to take it?",
+                X = Pos.Center(),
+                Y = 1
+            };
+
+            var line2 = new Label
+            {
+                Text = "This will end your turn.",
+                X = Pos.Center(),
+                Y = Pos.Bottom(line1) + 1
+            };
+
+            var btnOk = new Button
+            {
+                Text = "OK",
+                IsDefault = true,
+                X = Pos.Percent(25),
+                Y = Pos.Bottom(line2) + 2
+            };
+
+            var btnCancel = new Button
+            {
+                Text = "Cancel",
+                X = Pos.Percent(60),
+                Y = Pos.Top(btnOk)
+            };
+
+            btnOk.Accept += (_, __) =>
+            {
+                // Déclenche l'action + envoie payload { tenderId }
+                OnRoundAction(null, CurrentGameActionList.Action.ParticipateInCallForTenders);
+                var payload = System.Text.Json.JsonSerializer.Serialize(new { tenderId = tender.Id });
+                OnRoundActionPayload(null, payload);
+                Application.RequestStop();
+            };
+
+            btnCancel.Accept += (_, __) => Application.RequestStop();
+
+            confirm.Add(line1, line2, btnOk, btnCancel);
+            Application.Run(confirm);
+        };
+
+        CallForTenders!.Add(table);
         LeftBody!.Add(CallForTenders);
     }
 
@@ -693,7 +813,10 @@ public class CurrentGameCompanyView : CurrentGameView
             Height = Dim.Fill()
         };
 
-        actionList.OpenSelectedItem += (_, selected) => { OnRoundAction(null, (CurrentGameActionList.Action) selected.Value); };
+        actionList.OpenSelectedItem += (_, selected) =>
+        {
+            OnRoundAction(null, (CurrentGameActionList.Action)selected.Value);
+        };
 
         Actions.Add(actionList);
 
@@ -726,24 +849,48 @@ public class CurrentGameCompanyView : CurrentGameView
 
         Remove(Body);
     }
+
+    // ------- Helpers -------
+    private static string FormatSkills(ICollection<SkillOverview> skills)
+    {
+        if (skills.Count == 0) return "-";
+        return string.Join(", ", skills.Select(s => $"{s.Name}({s.Level})"));
+    }
+
+    // Somme les niveaux par skill côté employés, chaque exigence du tender doit être couverte
+    private static bool HasRequiredSkills(ICollection<EmployeeOverview> employees, ICollection<SkillOverview> tenderSkills)
+    {
+        var empTotals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var e in employees)
+        {
+            foreach (var s in e.Skills)
+            {
+                if (!empTotals.ContainsKey(s.Name)) empTotals[s.Name] = 0;
+                empTotals[s.Name] += s.Level;
+            }
+        }
+
+        foreach (var req in tenderSkills)
+        {
+            if (!empTotals.TryGetValue(req.Name, out var total) || total < req.Level)
+                return false;
+        }
+
+        return true;
+    }
 }
 
 public class CurrentGameActionList : ListView
 {
     public enum Action
     {
-        //SendEmployeeForTraining,
         ParticipateInCallForTenders,
-        //RecruitAConsultant,
-        //FireAnEmployee,
         PassMyTurn
     }
 
     private readonly CurrentGameActionListDataSource Actions = [
-        //Action.SendEmployeeForTraining,
         Action.ParticipateInCallForTenders,
-        //Action.RecruitAConsultant,
-        //Action.FireAnEmployee,
         Action.PassMyTurn
     ];
 
@@ -757,37 +904,27 @@ public class CurrentGameActionListDataSource : List<CurrentGameActionList.Action
 {
     public int Length => Count;
 
-    public bool SuspendCollectionChangedEvent { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    private bool _suspend;
+    public bool SuspendCollectionChangedEvent
+    {
+        get => _suspend;
+        set => _suspend = value;
+    }
 
     public event NotifyCollectionChangedEventHandler CollectionChanged = (_, __) => { };
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-    }
+    public void Dispose() => GC.SuppressFinalize(this);
 
-    public bool IsMarked(int item)
-    {
-        return false;
-    }
+    public bool IsMarked(int item) => false;
 
     public void Render(ListView container, ConsoleDriver driver, bool selected, int item, int col, int line, int width, int start = 0)
     {
-        switch (item)
+        switch ((CurrentGameActionList.Action)item)
         {
-            //case (int) CurrentGameActionList.Action.SendEmployeeForTraining:
-            //    driver.AddStr("Send Employee For Training");
-            //    break;
-            case (int) CurrentGameActionList.Action.ParticipateInCallForTenders:
+            case CurrentGameActionList.Action.ParticipateInCallForTenders:
                 driver.AddStr("Participate In Call For Tenders");
                 break;
-            //case (int) CurrentGameActionList.Action.RecruitAConsultant:
-            //    driver.AddStr("Recruit A Consultant");
-            //    break;
-            //case (int) CurrentGameActionList.Action.FireAnEmployee:
-            //    driver.AddStr("Fire An Employee");
-            //    break;
-            case (int) CurrentGameActionList.Action.PassMyTurn:
+            case CurrentGameActionList.Action.PassMyTurn:
                 driver.AddStr("Pass My Turn");
                 break;
         }
@@ -795,8 +932,6 @@ public class CurrentGameActionListDataSource : List<CurrentGameActionList.Action
 
     public void SetMark(int item, bool value) { }
 
-    public IList ToList()
-    {
-        return this;
-    }
+    // ✅ IList non générique propre
+    public IList ToList() => new ArrayList(this);
 }
