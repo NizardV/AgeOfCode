@@ -11,6 +11,12 @@ using Server.Persistence.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.ListenLocalhost(5176);
+    o.ListenLocalhost(7032, lo => lo.UseHttps());
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<WssDbContext>();

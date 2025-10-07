@@ -142,6 +142,20 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
             await Task.Delay(100);
         }
 
+        // If the player wants to view Call For Tenders, open that screen and come back here.
+        if (CurrentRoundAction == CurrentGameActionList.Action.ParticipateInCallForTenders)
+        {
+            // Reset the selection before navigating so we don't immediately re-trigger on return.
+            CurrentRoundAction = null;
+
+            var callForTenderScreen = new CallForTenderScreen(Target, GameId, PlayerName);
+            await callForTenderScreen.Show();
+
+            // Re-open the company view after returning from the Call For Tender screen.
+            await DisplayCompanyView();
+            return;
+        }
+
         var lastRound = CurrentGame!.CurrentRound;
 
         await ActInRound();

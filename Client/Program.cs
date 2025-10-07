@@ -34,8 +34,13 @@ public class Program
             var titleScreen = new TitleScreen(mainWindow);
             await titleScreen.Show();
 
-            var mainMenuScreen = new MainMenuScreen(mainWindow);
-            await mainMenuScreen.Show();
+            var quit = false;
+            while (!quit)
+            {
+                var mainMenuScreen = new MainMenuScreen(mainWindow);
+                await mainMenuScreen.Show();
+                quit = mainMenuScreen.Action == MainMenuActionList.Action.QUIT;
+            }
 
             Application.RequestStop();
         });
