@@ -72,7 +72,12 @@ public class CreateEmployee(
 
         var randomSalary = salaries.ToList()[rnd.Next(salaries.Count() - 1)];
 
-        var employee = new Employee(employeeName, company!.Id!.Value, company!.Player.GameId, randomSalary);
+        var randomName = nameList[rnd.Next(nameList.Count)];
+        var randomLastName = lastNameList[rnd.Next(lastNameList.Count)];
+
+        var fullName = $"{randomName} {randomLastName}";
+
+        var employee = new Employee(fullName, company!.Id!.Value, company!.Player.GameId, randomSalary);
 
         var randomSkills = await skillsRepository.GetRandomSkills(3);
 

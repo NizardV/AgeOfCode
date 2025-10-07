@@ -26,7 +26,6 @@ public class InitializeCompanyEmployees(
     IGameHubService gameHubService
 ) : IAction<InitializeCompanyEmployeesParams, Result<int>>
 {
-    // optionnel : éviter de recréer le validator à chaque appel
     private static readonly InitializeCompanyEmployeesValidator _validator = new();
 
     public async Task<Result<int>> PerformAsync(InitializeCompanyEmployeesParams actionParams)
@@ -53,12 +52,26 @@ public class InitializeCompanyEmployees(
             .Select(i => 29000 + i * 500)
             .ToList();
 
+        var nameList = new List<string>
+        {
+            "John", "Jane", "Bob", "Alice", "Tom", "Sara", "Mike", "Lily", "David", "Emma", "Baptiste", "Valérie", "Lucas", "Julie", "Antoine", "Camille", "Mathieu", "Juliette", "Léa", "Émile"
+        };
+
+        var lastNameList = new List<string>
+        {
+            "Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"
+        };
+
         for (int i = 0; i < toCreate; i++)
         {
             var randomSalary = salaries[rnd.Next(salaries.Count)];
 
+            var randomName = nameList[rnd.Next(nameList.Count)];
+            var randomLastName = lastNameList[rnd.Next(lastNameList.Count)];
+
+            var fullName = $"{randomName} {randomLastName}";
             var employee = new Employee(
-                $"Employee {current + i + 1}",
+                fullName,
                 company.Id!.Value,
                 company.Player.GameId,
                 randomSalary
