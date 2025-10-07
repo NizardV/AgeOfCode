@@ -27,7 +27,7 @@ public class GameHub(IGameHubService gameHubService, IGamesRepository gamesRepos
     }
 }
 
-public class GameHubService(IHubContext<GameHub, IGameHubClient> gameHubContext, IGamesRepository gamesRepository) : IGameHubService
+public class GameHubService(IHubContext<GameHub, IGameHubClient> gameHubContext, IGamesRepository gamesRepository, ILogger<GameHubService> logger) : IGameHubService
 {
     public async Task UpdateCurrentGame(IGameHubClient? caller = null, int? gameId = null, Game? game = null)
     {
@@ -39,7 +39,10 @@ public class GameHubService(IHubContext<GameHub, IGameHubClient> gameHubContext,
 
         var data = game.ToOverview();
 
-        caller ??= gameHubContext.Clients.Group($"{game.Id}__{game.Name}");
+        var groupName = $"{game.Id}__{game.Name}";
+        logger.LogInformation("Sending game update to group: {GroupName}", groupName);
+
+        caller ??= gameHubContext.Clients.Group(groupName);
 
         await caller.CurrentGameUpdated(data);
     }
