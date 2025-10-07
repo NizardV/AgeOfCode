@@ -27,7 +27,7 @@ public class CreateGameValidator : AbstractValidator<CreateGameParams>
         RuleFor(p => p.GameName).NotEmpty();
         RuleFor(p => p.PlayerName).NotEmpty();
         RuleFor(p => p.CompanyName).NotEmpty();
-        RuleFor(p => p.type).NotEmpty().IsInEnum();
+        RuleFor(p => p.type).IsInEnum();
         RuleFor(p => p.Rounds).NotNull().GreaterThanOrEqualTo(15);
     }
 }

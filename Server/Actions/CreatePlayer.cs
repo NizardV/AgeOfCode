@@ -24,7 +24,7 @@ public class CreatePlayerValidator : AbstractValidator<CreatePlayerParams>
     {
         RuleFor(p => p.PlayerName).NotEmpty();
         RuleFor(p => p.CompanyName).NotEmpty();
-        RuleFor(p => p.type).NotEmpty().IsInEnum();
+        RuleFor(p => p.type).IsInEnum();
         RuleFor(p => p.GameId).NotEmpty().When(p => p.Game is null);
         RuleFor(p => p.Game).NotEmpty().When(p => p.GameId is null);
     }
