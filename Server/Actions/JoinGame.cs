@@ -30,6 +30,7 @@ public class JoinGame(
         if (createPlayerActionResult.IsSuccess)
         {
             var player = createPlayerActionResult.Value;
+            // Send the update to all players in the game
             await gameHubService.UpdateCurrentGame(gameId: player.GameId);
         }
 

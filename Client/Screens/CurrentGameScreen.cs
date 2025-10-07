@@ -78,6 +78,15 @@ public class CurrentGameScreen(Window target, int gameId, string playerName)
             CurrentRoundAction = null;
             if (data.Status == "InProgress") { CurrentGameStarted = true; }
             if (data.Status == "Ended") { CurrentGameEnded = true; }
+
+            Application.Invoke(async () =>
+            {
+                ReloadWindowTitle();
+                if (CurrentView is not null)
+                {
+                    await CurrentView.Refresh(CurrentGame);
+                }
+            });
         });
 
         await hubConnection.StartAsync();
