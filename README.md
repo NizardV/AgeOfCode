@@ -1,220 +1,201 @@
-# Why So Serious? (WSS)
+# AgeOfCode
 
-<!-- COVERAGE_RESULTS_START -->
-![Code Coverage](https://img.shields.io/badge/Code%20Coverage-18%25-yellow?style=flat)
+> Application client-serveur temps réel avec interface terminal interactive / Real-time client-server app with interactive terminal UI
 
-Package | Line Rate | Branch Rate | Complexity | Health
--------- | --------- | ----------- | ---------- | ------
-Server | 18% | 16% | 154 | ➖
-**Summary** | **18%** (64 / 356) | **16%** (17 / 108) | **154** | ➖
-<!-- COVERAGE_RESULTS_END -->
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
+[![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-8.0-512BD4?style=flat&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet)
+[![SignalR](https://img.shields.io/badge/SignalR-WebSockets-512BD4?style=flat&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet/signalr)
+[![Terminal.Gui](https://img.shields.io/badge/Terminal.Gui-TUI-555555?style=flat)](https://github.com/gui-cs/Terminal.Gui)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Entity Framework Core](https://img.shields.io/badge/EF%20Core-8.0-512BD4?style=flat&logo=dotnet&logoColor=white)](https://learn.microsoft.com/ef/core)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com)
 
-This repository contains two applications developed using .NET 8:
-1. **WebAPI**: A backend API for handling data and WebSocket connections.
-2. **CLI**: A command-line application that communicates with the WebAPI using SignalR and displays UI using `Terminal.Gui`.
+## 🇫🇷 Français | 🇬🇧 English
 
-Additionally, the project includes a PostgreSQL database and PgAdmin setup using Docker for managing the database. 
+[Voir en français](#-présentation) | [View in English](#-overview)
 
-## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Cloning the Repository](#cloning-the-repository)
-- [Setting up Docker (PostgreSQL and PgAdmin)](#setting-up-docker-postgresql-and-pgadmin)
-- [Running the WebAPI](#running-the-webapi)
-- [Running the CLI](#running-the-cli)
-- [Publishing the Applications](#publishing-the-applications)
-- [Configuration](#configuration)
-- [Troubleshooting](#troubleshooting)
+---
 
-## Prerequisites
-Before you begin, ensure you have the following installed on your machine:
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Docker](https://www.docker.com/get-started)
-- [Git](https://git-scm.com/)
+## 🇫🇷 Présentation
 
-## Cloning the Repository
-To clone the repository, run the following command:
+AgeOfCode est une application client-serveur temps réel développée avec .NET 8. Le serveur expose une WebAPI ASP.NET Core couplée à SignalR pour la communication par WebSockets. Le client est une application en ligne de commande avec interface terminal interactive (TUI) construite avec Terminal.Gui. Projet P1 DIIAGE basé sur un repo fourni par l'école.
 
-```bash
-git clone https://github.com/a-bachelet/DI1-P1
-cd DI1-P1
+## Stack technique
+
+| Composant | Technologies |
+|-----------|-------------|
+| Serveur | C#, ASP.NET Core, SignalR, Entity Framework Core |
+| Client | C#, Terminal.Gui (TUI) |
+| Base de données | PostgreSQL |
+| Infrastructure | Docker, Docker Compose (PostgreSQL + PgAdmin) |
+| Tests | xUnit — tests unitaires (Server.Tests/) |
+
+## Architecture
+
+```
+AgeOfCode/
+├── Client/         # Application CLI/TUI (Terminal.Gui)
+│   └── Connexion à l'API et au hub SignalR
+├── Server/         # WebAPI ASP.NET Core + hub SignalR
+│   └── Contrôleurs REST, hub temps réel, EF Core + PostgreSQL
+└── Server.Tests/   # Tests unitaires du serveur
 ```
 
-## Setting up Docker (PostgreSQL and PgAdmin)
+## Fonctionnalités principales
 
-The project includes a Docker Compose file for setting up PostgreSQL and PgAdmin. To start the database services, navigate to the project root and run:
+- Interface terminal interactive (TUI) avec Terminal.Gui
+- Communication temps réel via WebSockets (SignalR)
+- Base de données PostgreSQL avec migrations EF Core
+- Administration de la base via PgAdmin (Docker)
+- Tests unitaires du serveur
+
+## Lancer en local
+
+### Prérequis
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Docker](https://www.docker.com/get-started)
+
+### 1. Base de données (Docker)
 
 ```bash
 docker-compose up -d
 ```
 
-This will:
+PostgreSQL accessible sur `localhost:5432` · PgAdmin sur `http://localhost:8080`
+(identifiants : `wss@wss.com` / `WSS`)
 
-- Spin up a PostgreSQL container for the database.
-- Spin up a PgAdmin container for database management.
-
-You can access PgAdmin in your browser at http://localhost:8080 with the following credentials:
-
-- Email: wss@wss.com
-- Password: WSS
-
-## Applying Database Migrations
-
-In order to manage Entity Framework Core (EF Core) migrations, you'll need the dotnet-ef command-line tool.
-
-Follow these steps to install dotnet-ef and apply migrations:
-
-### 1. Install dotnet-ef as a global tool:
-
-Run the following command to install the Entity Framework Core CLI tool globally on your machine:
+### 2. Appliquer les migrations EF Core
 
 ```bash
-dotnet tool install --global dotnet-ef
-```
-
-If you already have it installed and need to update to the latest version, use:
-
-```bash
-dotnet tool update --global dotnet-ef
-```
-
-### 2. Apply Migrations:
-
-After installing the tool, you can apply any pending migrations to your database:
-
-- Navigate to your project's directory (the one containing your .csproj file):
-
-```
 cd Server
-```
-
-- Apply migrations to update your database schema:
-
-```bash
 dotnet ef database update
 ```
 
-This command will apply the latest migrations in your project to the configured database.
-
-### 3. Creating a New Migration:
-
-If you've made changes to your models and need to create a new migration, use the following command:
-
-```bash
-dotnet ef migrations add <MigrationName>
-```
-
-Replace `<MigrationName>` with a descriptive name for the migration, such as InitialCreate or AddNewField.
-
-### 4. Rollback a Migration:
-
-If you need to revert a migration, run:
-
-```bash
-dotnet ef database update <PreviousMigrationName>
-```
-
-Replace `<PreviousMigrationName>` with the name of the migration.
-
-## Running the WebAPI
-
-Navigate to the Server project directory:
+### 3. Lancer le serveur
 
 ```bash
 cd Server
-```
-
-Update the appsettings.json file if necessary (default configuration connects to PostgreSQL via localhost).
-
-Run the WebAPI:
-
-```bash
 dotnet run --launch-profile https
 ```
 
-The WebAPI will start running on https://localhost:7032 (as per your configuration).
+API disponible sur `https://localhost:7032`.
 
-## Running the CLI
-
-Navigate to the Client project directory:
+### 4. Lancer le client TUI
 
 ```bash
 cd Client
-```
-
-Ensure the appsettings.json file contains the correct API and WebSocket server configuration. The default points to the WebAPI running locally.
-
-Run the CLI application:
-
-```bash
 dotnet run
 ```
 
-This will initialize the TUI (Terminal User Interface) which connects to the WebAPI and WebSocket server.
-
-## Publishing the Applications
-
-### Publishing the WebAPI
-
-To publish the WebAPI to a folder or server, run the following command in the Server project directory:
+### Lancer les tests
 
 ```bash
-dotnet publish -c Release -o ./publish
+cd Server.Tests
+dotnet test
 ```
 
-This will generate the compiled API in the ./publish folder, ready for deployment.
+> Documentation complète de setup : [README-SETUP.md](./README-SETUP.md)
 
-### Publishing the CLI
+## Équipe
 
-Similarly, to publish the CLI application, run the following command in the Client project directory:
+Projet P1 DIIAGE — 3 contributeurs
+
+| Rôle | Nom |
+|------|-----|
+| Développeur | [À COMPLÉTER] |
+| Développeur | [À COMPLÉTER] |
+| Développeur | [À COMPLÉTER] |
+
+---
+
+## 🇬🇧 Overview
+
+AgeOfCode is a real-time client-server application built with .NET 8. The server exposes an ASP.NET Core WebAPI combined with SignalR for WebSocket communication. The client is a command-line application with an interactive terminal UI (TUI) built with Terminal.Gui. P1 DIIAGE project based on a school-provided repository.
+
+## Tech stack
+
+| Component | Technologies |
+|-----------|-------------|
+| Server | C#, ASP.NET Core, SignalR, Entity Framework Core |
+| Client | C#, Terminal.Gui (TUI) |
+| Database | PostgreSQL |
+| Infrastructure | Docker, Docker Compose (PostgreSQL + PgAdmin) |
+| Tests | xUnit — unit tests (Server.Tests/) |
+
+## Architecture
+
+```
+AgeOfCode/
+├── Client/         # CLI/TUI application (Terminal.Gui)
+│   └── Connects to the API and SignalR hub
+├── Server/         # ASP.NET Core WebAPI + SignalR hub
+│   └── REST controllers, real-time hub, EF Core + PostgreSQL
+└── Server.Tests/   # Server unit tests
+```
+
+## Key features
+
+- Interactive terminal UI (TUI) with Terminal.Gui
+- Real-time communication via WebSockets (SignalR)
+- PostgreSQL database with EF Core migrations
+- Database administration via PgAdmin (Docker)
+- Server unit tests
+
+## Run locally
+
+### Prerequisites
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Docker](https://www.docker.com/get-started)
+
+### 1. Database (Docker)
 
 ```bash
-dotnet publish -c Release -o ./publish
+docker-compose up -d
 ```
 
-This will generate the compiled CLI in the ./publish folder.
+PostgreSQL at `localhost:5432` · PgAdmin at `http://localhost:8080`
+(credentials: `wss@wss.com` / `WSS`)
 
-## Configuration
+### 2. Apply EF Core migrations
 
-### WebAPI Configuration
-
-The WebAPI uses appsettings.json for configuration. The default configuration can be found in Server/appsettings.json. Key settings include:
-
-Database Configuration:
-
-```json
-"Database": {
-  "Host": "127.0.0.1",
-  "Port": "5432",
-  "Name": "wss_dev",
-  "User": "wss",
-  "Pass": "WSS"
-}
+```bash
+cd Server
+dotnet ef database update
 ```
 
-### CLI Configuration
+### 3. Start the server
 
-The CLI application uses Client/appsettings.json to configure the API and WebSocket server connections:
-
-- API Configuration:
-
-```json
-"WebApiServer": {
-  "Scheme": "https",
-  "Domain": "localhost",
-  "Port": "7032"
-}
+```bash
+cd Server
+dotnet run --launch-profile https
 ```
 
-- WebSocket Server Configuration:
+API available at `https://localhost:7032`.
 
-```json
-"WebSocketServer": {
-  "Scheme": "wss",
-  "Domain": "localhost",
-  "Port": "7032"
-}
+### 4. Start the TUI client
+
+```bash
+cd Client
+dotnet run
 ```
 
-## Troubleshooting
-- PostgreSQL Connection Issues: Ensure that the PostgreSQL container is running and accessible via port 5432.
-- SSL Errors: If running locally without SSL, modify the scheme in appsettings.json to http instead of https for the WebAPI.
+### Run tests
+
+```bash
+cd Server.Tests
+dotnet test
+```
+
+> Full setup documentation: [README-SETUP.md](./README-SETUP.md)
+
+## Team
+
+P1 DIIAGE project — 3 contributors
+
+| Role | Name |
+|------|------|
+| Developer | [TO COMPLETE] |
+| Developer | [TO COMPLETE] |
+| Developer | [TO COMPLETE] |
