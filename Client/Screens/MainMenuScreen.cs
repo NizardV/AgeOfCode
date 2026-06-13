@@ -105,7 +105,7 @@ public class MainMenuActionListDataSource : List<MainMenuActionList.Action>, ILi
                 driver.AddStr("Join a game");
                 break;
             case (int) MainMenuActionList.Action.STATISTICS:
-                driver.AddStr("view stats");
+                driver.AddStr("View stats");
                 break;
             case (int) MainMenuActionList.Action.QUIT:
                 driver.AddStr("Quit");
